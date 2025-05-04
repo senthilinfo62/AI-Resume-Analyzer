@@ -60,14 +60,16 @@ class ResumeViewSet(viewsets.ModelViewSet):
             # Execute use case
             resume = analysis_use_case.execute(pk)
 
-            # Save detailed feedback
-            for category, content in resume.feedback.items():
-                feedback_repository.create(
-                    resume_id=resume.id,
-                    category=category,
-                    content=content,
-                    score=resume.score
-                )
+            # Save detailed feedback for main categories
+            main_categories = ['technical_skills', 'education', 'experience', 'achievements', 'formatting']
+            for category in main_categories:
+                if category in resume.feedback:
+                    feedback_repository.create(
+                        resume_id=resume.id,
+                        category=category,
+                        content=resume.feedback[category],
+                        score=resume.feedback.get('category_scores', {}).get(category, resume.score)
+                    )
 
             # Return response
             return Response(
