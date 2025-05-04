@@ -13,9 +13,10 @@ const Footer = () => {
         mt: 'auto',
         backgroundColor: (theme) => theme.palette.grey[900],
         color: 'white',
+        width: '100%'
       }}
     >
-      <Container maxWidth={false}>
+      <Container maxWidth={false} sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 } }}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={4}

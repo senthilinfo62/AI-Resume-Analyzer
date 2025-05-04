@@ -38,10 +38,11 @@ const Header = ({ isAuthenticated, onLogout }: HeaderProps) => {
   return (
     <AppBar position="static" elevation={0} sx={{
       backgroundColor: 'primary.main',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+      width: '100%'
     }}>
-      <Container maxWidth={false}>
-        <Toolbar disableGutters>
+      <Container maxWidth={false} sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 } }}>
+        <Toolbar disableGutters sx={{ width: '100%' }}>
           <DescriptionIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
           <Typography
             variant="h6"

@@ -91,10 +91,12 @@ function App() {
           display: 'flex',
           flexDirection: 'column',
           minHeight: '100vh',
+          width: '100vw',
+          maxWidth: '100%',
           backgroundColor: 'background.default'
         }}>
           <Header isAuthenticated={isAuthenticated} onLogout={logout} />
-          <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
+          <Box component="main" sx={{ flexGrow: 1, py: 4, width: '100%' }}>
             <Routes>
               <Route path="/" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
               <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />

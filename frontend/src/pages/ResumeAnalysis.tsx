@@ -1,4 +1,5 @@
-import { Link as RouterLink } from 'react-router-dom';
+import { useState } from 'react';
+import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -12,15 +13,22 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
+  Tab,
+  Tabs,
 } from '@mui/material';
 import Grid from '../components/ui/Grid';
 import {
   ExpandMore,
   ArrowBack,
+  Assessment,
+  CompareArrows,
 } from '@mui/icons-material';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, RadialLinearScale } from 'chart.js';
 import { Doughnut, PolarArea } from 'react-chartjs-2';
 import { Resume } from '../services/resume';
+import ResumeService from '../services/resume';
+import JobComparisonForm from '../components/resume/JobComparisonForm';
+import JobMatchResults from '../components/resume/JobMatchResults';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, RadialLinearScale, Tooltip, Legend);
@@ -64,9 +72,58 @@ const staticResumeData: Resume & {
   ]
 };
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
 const ResumeAnalysis = () => {
-  // Using static data instead of fetching from API
-  const resumeData = staticResumeData;
+  const { id } = useParams<{ id: string }>();
+  const [resumeData, setResumeData] = useState<Resume>(staticResumeData);
+  const [tabValue, setTabValue] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Handle tab change
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  // Handle job comparison form submission
+  const handleJobComparisonSubmit = async (jobData: {
+    title: string;
+    description: string;
+    company?: string;
+    location?: string;
+  }) => {
+    setIsLoading(true);
+    try {
+      // In a real app, this would call the API
+      const result = await ResumeService.analyzeResume(resumeData.id, jobData);
+      setResumeData(result);
+      setTabValue(2); // Switch to job match tab
+    } catch (error) {
+      console.error('Error comparing with job description:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Prepare chart data
   const doughnutData = {
@@ -134,174 +191,228 @@ const ResumeAnalysis = () => {
         Back to Dashboard
       </Button>
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="h5" gutterBottom>
-              Overall Score
-            </Typography>
-            <Box sx={{ height: 200, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Box sx={{ position: 'relative', width: 180, height: 180 }}>
-                <Doughnut data={doughnutData} options={{ cutout: '80%' }} />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                    {resumeData.score}
-                  </Typography>
-                  <Typography variant="body2" component="div">
-                    out of 100
-                  </Typography>
+      {/* Tabs for different sections */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="resume analysis tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab
+            label="Resume Analysis"
+            icon={<Assessment />}
+            iconPosition="start"
+            id="tab-0"
+            aria-controls="tabpanel-0"
+          />
+          <Tab
+            label="Job Comparison"
+            icon={<CompareArrows />}
+            iconPosition="start"
+            id="tab-1"
+            aria-controls="tabpanel-1"
+          />
+          {resumeData.jobMatch && (
+            <Tab
+              label="Job Match Results"
+              icon={<CompareArrows />}
+              iconPosition="start"
+              id="tab-2"
+              aria-controls="tabpanel-2"
+            />
+          )}
+        </Tabs>
+      </Box>
+
+      {/* Resume Analysis Tab */}
+      <TabPanel value={tabValue} index={0}>
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={4}>
+            <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
+              <Typography variant="h5" gutterBottom>
+                Overall Score
+              </Typography>
+              <Box sx={{ height: 200, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Box sx={{ position: 'relative', width: 180, height: 180 }}>
+                  <Doughnut data={doughnutData} options={{ cutout: '80%' }} />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
+                      {resumeData.score}
+                    </Typography>
+                    <Typography variant="body2" component="div">
+                      out of 100
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
-            </Box>
-            <Typography
-              variant="h6"
-              sx={{
-                mt: 2,
-                color:
-                  (resumeData.score || 0) >= 80
-                    ? 'success.main'
-                    : (resumeData.score || 0) >= 60
-                    ? 'warning.main'
-                    : 'error.main',
-              }}
-            >
-              {(resumeData.score || 0) >= 80
-                ? 'Excellent'
-                : (resumeData.score || 0) >= 60
-                ? 'Good'
-                : 'Needs Improvement'}
-            </Typography>
-          </Paper>
+              <Typography
+                variant="h6"
+                sx={{
+                  mt: 2,
+                  color:
+                    (resumeData.score || 0) >= 80
+                      ? 'success.main'
+                      : (resumeData.score || 0) >= 60
+                      ? 'warning.main'
+                      : 'error.main',
+                }}
+              >
+                {(resumeData.score || 0) >= 80
+                  ? 'Excellent'
+                  : (resumeData.score || 0) >= 60
+                  ? 'Good'
+                  : 'Needs Improvement'}
+              </Typography>
+            </Paper>
 
-          <Card sx={{ mt: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Resume Details
+            <Card sx={{ mt: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Resume Details
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <Typography variant="body2" gutterBottom>
+                  <strong>Filename:</strong> {resumeData.filename}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Uploaded:</strong> {resumeData.uploadDate}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  sx={{ mt: 2 }}
+                  // In a real app, this would download the resume
+                >
+                  Download Resume
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={8}>
+            <Paper elevation={3} sx={{ p: 3 }}>
+              <Typography variant="h5" gutterBottom>
+                Category Breakdown
+              </Typography>
+              <Box sx={{ height: 300, mb: 4 }}>
+                <PolarArea data={categoryData} />
+              </Box>
+
+              <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+                Key Strengths
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              <Typography variant="body2" gutterBottom>
-                <strong>Filename:</strong> {resumeData.filename}
+              <Box sx={{ mb: 4 }}>
+                {resumeData.keyStrengths?.map((strength, index) => (
+                  <Chip
+                    key={index}
+                    label={strength}
+                    color="success"
+                    variant="outlined"
+                    sx={{ m: 0.5, fontSize: '0.9rem', py: 0.5 }}
+                  />
+                ))}
+              </Box>
+
+              <Typography variant="h5" gutterBottom>
+                Areas for Improvement
               </Typography>
-              <Typography variant="body2" gutterBottom>
-                <strong>Uploaded:</strong> {resumeData.uploadDate}
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ mb: 4 }}>
+                {resumeData.improvementSuggestions?.map((suggestion, index) => (
+                  <Chip
+                    key={index}
+                    label={suggestion}
+                    color="warning"
+                    variant="outlined"
+                    sx={{ m: 0.5, fontSize: '0.9rem', py: 0.5 }}
+                  />
+                ))}
+              </Box>
+
+              <Typography variant="h5" gutterBottom>
+                Detailed Feedback
               </Typography>
-              <Button
-                variant="outlined"
-                fullWidth
-                sx={{ mt: 2 }}
-                // In a real app, this would download the resume
-              >
-                Download Resume
-              </Button>
-            </CardContent>
-          </Card>
+              <Divider sx={{ mb: 2 }} />
+
+              <Accordion defaultExpanded>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="h6">Technical Skills</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body1">{resumeData.feedback?.technical_skills || 'No feedback available'}</Typography>
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="h6">Education</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body1">{resumeData.feedback?.education || 'No feedback available'}</Typography>
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="h6">Experience</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body1">{resumeData.feedback?.experience || 'No feedback available'}</Typography>
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="h6">Achievements</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body1">{resumeData.feedback?.achievements || 'No feedback available'}</Typography>
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="h6">Formatting</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body1">{resumeData.feedback?.formatting || 'No feedback available'}</Typography>
+                </AccordionDetails>
+              </Accordion>
+            </Paper>
+          </Grid>
         </Grid>
+      </TabPanel>
 
-        <Grid item xs={12} md={8}>
-          <Paper elevation={3} sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom>
-              Category Breakdown
-            </Typography>
-            <Box sx={{ height: 300, mb: 4 }}>
-              <PolarArea data={categoryData} />
-            </Box>
+      {/* Job Comparison Form Tab */}
+      <TabPanel value={tabValue} index={1}>
+        <JobComparisonForm
+          resumeId={resumeData.id}
+          onSubmit={handleJobComparisonSubmit}
+          isLoading={isLoading}
+        />
+      </TabPanel>
 
-            <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-              Key Strengths
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ mb: 4 }}>
-              {resumeData.keyStrengths?.map((strength, index) => (
-                <Chip
-                  key={index}
-                  label={strength}
-                  color="success"
-                  variant="outlined"
-                  sx={{ m: 0.5, fontSize: '0.9rem', py: 0.5 }}
-                />
-              ))}
-            </Box>
-
-            <Typography variant="h5" gutterBottom>
-              Areas for Improvement
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ mb: 4 }}>
-              {resumeData.improvementSuggestions?.map((suggestion, index) => (
-                <Chip
-                  key={index}
-                  label={suggestion}
-                  color="warning"
-                  variant="outlined"
-                  sx={{ m: 0.5, fontSize: '0.9rem', py: 0.5 }}
-                />
-              ))}
-            </Box>
-
-            <Typography variant="h5" gutterBottom>
-              Detailed Feedback
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-
-            <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="h6">Technical Skills</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body1">{resumeData.feedback?.technical_skills || 'No feedback available'}</Typography>
-              </AccordionDetails>
-            </Accordion>
-
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="h6">Education</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body1">{resumeData.feedback?.education || 'No feedback available'}</Typography>
-              </AccordionDetails>
-            </Accordion>
-
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="h6">Experience</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body1">{resumeData.feedback?.experience || 'No feedback available'}</Typography>
-              </AccordionDetails>
-            </Accordion>
-
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="h6">Achievements</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body1">{resumeData.feedback?.achievements || 'No feedback available'}</Typography>
-              </AccordionDetails>
-            </Accordion>
-
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="h6">Formatting</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body1">{resumeData.feedback?.formatting || 'No feedback available'}</Typography>
-              </AccordionDetails>
-            </Accordion>
-          </Paper>
-        </Grid>
-      </Grid>
+      {/* Job Match Results Tab */}
+      {resumeData.jobMatch && (
+        <TabPanel value={tabValue} index={2}>
+          <JobMatchResults jobMatch={resumeData.jobMatch} />
+        </TabPanel>
+      )}
     </Container>
   );
 };

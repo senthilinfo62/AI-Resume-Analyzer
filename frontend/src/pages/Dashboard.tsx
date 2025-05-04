@@ -46,7 +46,7 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: { xs: 2, sm: 3, md: 4 } }}>
+    <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: { xs: 2, sm: 3, md: 4 }, width: '100%', maxWidth: 'none' }}>
       <Paper
         elevation={0}
         sx={{

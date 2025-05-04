@@ -60,16 +60,17 @@ const Register = () => {
   });
 
   return (
-    <Container component="main" maxWidth="xs" sx={{ px: { xs: 2, sm: 3 } }}>
+    <Container component="main" maxWidth={false} sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 }, maxWidth: 'none' }}>
       <Box
         sx={{
           marginTop: 8,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          width: '100%'
         }}
       >
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+        <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: '600px' }}>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             Sign up
           </Typography>

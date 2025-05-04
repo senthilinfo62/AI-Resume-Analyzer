@@ -65,19 +65,22 @@ const Login = () => {
   });
 
   return (
-    <Container maxWidth="sm" sx={{ px: { xs: 2, sm: 3 } }}>
+    <Container maxWidth={false} sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 }, maxWidth: 'none' }}>
       <Box sx={{
         display: 'flex',
         justifyContent: 'center',
         minHeight: '70vh',
-        alignItems: 'center'
+        alignItems: 'center',
+        width: '100%'
       }}>
         <Paper
             elevation={6}
             sx={{
               p: 4,
               borderRadius: 2,
-              background: 'linear-gradient(to right bottom, #ffffff, #f8f9fa)'
+              background: 'linear-gradient(to right bottom, #ffffff, #f8f9fa)',
+              width: '100%',
+              maxWidth: '500px'
             }}
           >
             <Box
