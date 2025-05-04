@@ -1,0 +1,9 @@
+django>=5.0.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.0.0
+mysqlclient>=2.1.1
+python-dotenv>=1.0.0
+scikit-learn>=1.2.2
+nltk>=3.8.1
+pandas>=2.0.0
+dj-database-url>=2.0.0
