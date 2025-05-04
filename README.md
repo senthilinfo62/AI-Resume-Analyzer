@@ -99,6 +99,32 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+### Continuous Integration/Continuous Deployment
+
+The project uses GitHub Actions for CI/CD. The workflow includes:
+
+1. **Testing**: Automated tests for both frontend and backend
+2. **Building**: Building Docker images
+3. **Deployment**: (Configurable for your deployment environment)
+
+To run tests locally:
+
+#### Frontend Tests
+```
+cd frontend
+npm test
+```
+
+#### Backend Tests
+```
+cd backend
+pytest
+```
+
+The CI/CD pipeline runs automatically on:
+- Pushes to the main/master branch
+- Pull requests to the main/master branch
+
 ## Project Structure
 
 ```
@@ -122,6 +148,9 @@ ai-resume-analyzer/
 │   ├── requirements.txt      # Backend dependencies
 │   ├── download_nltk_data.py # Script to download NLTK data
 │   └── Dockerfile            # Backend Docker configuration
+├── .github/                  # GitHub configuration
+│   └── workflows/            # GitHub Actions workflows
+│       └── main.yml          # Main CI/CD workflow
 └── docker-compose.yml        # Docker Compose configuration
 ```
 
